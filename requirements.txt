@@ -2,5 +2,6 @@ networkx==2.7.1
 streamlit==1.16.0
 streamlit-aggrid==0.3.3 
 pandas==1.5.2  
-pickle==4.0
+jsonpickle==1.5.1 
+pickleshare==0.7.5  
 plotly==5.11.0
