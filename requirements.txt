@@ -1,0 +1,5 @@
+networkx==2.7.1 
+streamlit==1.16.0
+streamlit-aggrid==0.3.3 
+pickle==0.0.12
+plotly==5.11.0
