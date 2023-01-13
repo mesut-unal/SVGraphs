@@ -1,5 +1,6 @@
 import json
 import itertools  # itertools.combinations may be useful
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import scipy
@@ -21,7 +22,7 @@ def load_data():
 
 def main():
 
-    longest_graph,data = load_data()
+    longest_graph,df = load_data()
 
     edge_x = []
     edge_y = []
@@ -50,17 +51,22 @@ def main():
         node_x.append(x)
         node_y.append(y)
         node_id.append(node)
+        node_chr.append(int(df[df['Source']==node].Chromosome.item()))
 
-        node_chr.append(int(data[data['Source']==node].Chromosome.item()))
+    #unique_values = len(set(df.Chromosome.to_list()))
+    unique_values = len(set(node_chr))
+    color_bar_values = [val for val in np.linspace(0, 1, unique_values+1) for _ in range(2)]
+    discrete_colors = [val for val in px.colors.qualitative.Alphabet for _ in range(2)]
+    colorscale = [[value, color] for value, color in zip(color_bar_values, discrete_colors[1:])]
+    colorscale.pop(0)
+    colorscale.pop(-1)
 
     ### Compile hover text for each node
     node_text = []
     for n,node in enumerate(longest_graph.nodes()):
-        if n==len(longest_graph.nodes())-1:
-            next_node='None'
-        else:
-            next_node=list(longest_graph.nodes())[n+1]
-        node_text.append(f'Node:{node} - Next node:{next_node} - Chromosome:{node_chr[n]})')
+        next_node='None' if n==len(longest_graph.nodes())-1 else list(longest_graph.nodes())[n+1]
+        prev_node='None' if n==0 else list(longest_graph.nodes())[n-1]
+        node_text.append(f'Node:{node} | Prev.: {prev_node} | Next:{next_node} | Chromosome:{node_chr[n]}')
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -74,7 +80,7 @@ def main():
             #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
             #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
             # colorscale=px.colors.qualitative.Light24,
-            colorscale='Viridis',
+            colorscale=colorscale,
             reversescale=True,
             color=node_chr,
             size=10,
@@ -123,14 +129,14 @@ def main():
 
         # Prepare data
         # AgGrid(df)
-        gb = GridOptionsBuilder.from_dataframe(data)
+        gb = GridOptionsBuilder.from_dataframe(df)
         gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
         gb.configure_side_bar() #Add a sidebar
         gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
         gridOptions = gb.build()
 
         grid_response = AgGrid(
-            data,
+            df,
             gridOptions=gridOptions,
             data_return_mode='AS_INPUT', 
             update_mode='MODEL_CHANGED', 
@@ -142,12 +148,12 @@ def main():
             reload_data=True,
         )
 
-        data = grid_response['data']
+        df = grid_response['data']
         selected = grid_response['selected_rows'] 
-        df = pd.DataFrame(selected) #Pass the selected rows to a new dataframe df
+        df_f = pd.DataFrame(selected) #Pass the selected rows to a new dataframe df
 
         # Boolean to resize the dataframe, stored as a session state variable
-        st.dataframe(df, use_container_width=False)
+        st.dataframe(df_f, use_container_width=False)
 
 if __name__ == '__main__':
     main()
