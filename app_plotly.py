@@ -104,8 +104,8 @@ def main():
                     showarrow=False,
                     xref="paper", yref="paper",
                     x=0.1, y=1 ) ],
-                xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"),
-                yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"))
+                xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"),
+                yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"))
                 )
 
     st.plotly_chart(fig, use_container_width=True)
