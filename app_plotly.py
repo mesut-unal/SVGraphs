@@ -14,21 +14,18 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 # Cache the dataframe so it's only loaded once
 @st.experimental_memo
 def load_data():
-    longest_graph = pickle.load(open('tmp/graph.txt','rb'))
+    G = pickle.load(open('tmp/graph.txt','rb'))
+    lg = pickle.load(open('tmp/longest_chain.txt','rb'))
     df = pickle.load(open('tmp/dataframe.txt','rb')) # big dataframe
     df = df.sort_values(by=['Source'])
-    return longest_graph,df
+    return G,lg,df
 
-
-def main():
-
-    longest_graph,df = load_data()
-
+def plotter(G,df,title):
     edge_x = []
     edge_y = []
-    for edge in longest_graph.edges():
-        x0, y0 = longest_graph.nodes[edge[0]]['pos']
-        x1, y1 = longest_graph.nodes[edge[1]]['pos']
+    for edge in G.edges():
+        x0, y0 = G.nodes[edge[0]]['pos']
+        x1, y1 = G.nodes[edge[1]]['pos']
         edge_x.append(x0)
         edge_x.append(x1)
         edge_x.append(None)
@@ -46,14 +43,21 @@ def main():
     node_y = [] # copy number
     node_id = [] # node id
     node_chr = []
-    for node in longest_graph.nodes():
-        x, y = longest_graph.nodes[node]['pos']
+    for node in G.nodes():
+        x, y = G.nodes[node]['pos']
         node_x.append(x)
         node_y.append(y)
         node_id.append(node)
-        node_chr.append(int(df[df['Source']==node].Chromosome.item()))
-
-    #unique_values = len(set(df.Chromosome.to_list()))
+        if df[df['Source']==node].Chromosome.item() == 'X':
+            node_chr.append(23)
+        elif df[df['Source']==node].Chromosome.item() == 'Y':
+            node_chr.append(24)
+        elif df[df['Source']==node].Chromosome.item() == 'M':
+            node_chr.append(25)
+        else:
+            node_chr.append(int(df[df['Source']==node].Chromosome.item())) # item() returns numbers as str
+    
+    unique_values = len(set(df.Chromosome.to_list()))
     unique_values = len(set(node_chr))
     color_bar_values = [val for val in np.linspace(0, 1, unique_values+1) for _ in range(2)]
     discrete_colors = [val for val in px.colors.qualitative.Alphabet for _ in range(2)]
@@ -63,10 +67,17 @@ def main():
 
     ### Compile hover text for each node
     node_text = []
-    for n,node in enumerate(longest_graph.nodes()):
-        next_node='None' if n==len(longest_graph.nodes())-1 else list(longest_graph.nodes())[n+1]
-        prev_node='None' if n==0 else list(longest_graph.nodes())[n-1]
-        node_text.append(f'Node:{node} | Prev.: {prev_node} | Next:{next_node} | Chromosome:{node_chr[n]}')
+    for n,node in enumerate(G.nodes()):
+        next_node='None' if n==len(G.nodes())-1 else list(G.nodes())[n+1]
+        prev_node='None' if n==0 else list(G.nodes())[n-1]
+        if node_chr[n]==23:
+            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: X | CN: {node_y[n]}' )
+        elif node_chr[n]==24:
+            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: Y | CN: {node_y[n]}')
+        elif node_chr[n]==25:
+            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: M | CN: {node_y[n]}')
+        else:
+            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: {node_chr[n]} | CN: {node_y[n]}')
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -97,24 +108,34 @@ def main():
     # node_trace.text = node_id
     # node_trace.marker.color = node_chr
 
-
     fig = go.Figure(data=[edge_trace, node_trace],
-             layout=go.Layout(
-                title='Network graph of the longest chain',
-                titlefont_size=16,
-                showlegend=False,
-                hovermode='closest',
-                margin=dict(b=20,l=15,r=5,t=40),
-                annotations=[ dict(
-                    text=f"Length of the chain: {len(node_y)}",
-                    showarrow=False,
-                    xref="paper", yref="paper",
-                    x=0.1, y=1 ) ],
-                xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"),
-                yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"))
-                )
+                layout=go.Layout(
+                    width=1600, height=400,
+                    title=title,
+                    titlefont_size=16,
+                    showlegend=False,
+                    hovermode='closest',
+                    margin=dict(b=20,l=15,r=5,t=40),
+                    annotations=[ dict(
+                        text=f"Length of the chain: {len(node_y)}",
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.1, y=1 ) ],
+                    xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"),
+                    yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"))
+                    )
 
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
+
+def main():
+
+    G,lg,df = load_data()
+
+    fig_all = plotter(G,df,'Network graph of all the paths')
+    fig_longest = plotter(lg,df,'Network graph of the longest chain')
+
+    st.plotly_chart(fig_all, use_container_width=True)
+    st.plotly_chart(fig_longest, use_container_width=True)
 
     with st.sidebar:
         # Style and Printing
