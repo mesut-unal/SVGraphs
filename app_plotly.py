@@ -14,9 +14,9 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 # Cache the dataframe so it's only loaded once
 @st.experimental_memo
 def load_data():
-    G = pickle.load(open('tmp/graph.txt','rb'))
-    lg = pickle.load(open('tmp/longest_chain.txt','rb'))
-    df = pickle.load(open('tmp/dataframe.txt','rb')) # big dataframe
+    G = pickle.load(open('saved_variables/graph.txt','rb'))
+    lg = pickle.load(open('saved_variables/longest_chain.txt','rb'))
+    df = pickle.load(open('saved_variables/dataframe.txt','rb')) # big dataframe
     df = df.sort_values(by=['Source'])
     return G,lg,df
 
