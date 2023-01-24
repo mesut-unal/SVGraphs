@@ -48,15 +48,15 @@ def plotter(G,df,title):
         node_x.append(x)
         node_y.append(y)
         node_id.append(node)
-        if df[df['Source']==node].Chromosome.item() == 'X':
+        if df[df['Source']==node].Chromosome.values[0] == 'X':
             node_chr.append(23)
-        elif df[df['Source']==node].Chromosome.item() == 'Y':
+        elif df[df['Source']==node].Chromosome.values[0] == 'Y':
             node_chr.append(24)
-        elif df[df['Source']==node].Chromosome.item() == 'M':
+        elif df[df['Source']==node].Chromosome.values[0] == 'M':
             node_chr.append(25)
         else:
-            node_chr.append(int(df[df['Source']==node].Chromosome.item())) # item() returns numbers as str
-    
+            node_chr.append(int(df[df['Source']==node].Chromosome.values[0])) # item() returns numbers as str
+      
     unique_values = len(set(df.Chromosome.to_list()))
     unique_values = len(set(node_chr))
     color_bar_values = [val for val in np.linspace(0, 1, unique_values+1) for _ in range(2)]
