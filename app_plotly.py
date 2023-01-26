@@ -117,7 +117,7 @@ def plotter(G,df,title):
                     hovermode='closest',
                     margin=dict(b=20,l=15,r=5,t=40),
                     annotations=[ dict(
-                        text=f"Length of the chain: {len(node_y)}",
+                        text=f"Number of nodes: {len(node_y)}",
                         showarrow=False,
                         xref="paper", yref="paper",
                         x=0.1, y=1 ) ],
