@@ -56,7 +56,7 @@ def plotter(G,df,title):
             node_chr.append(25)
         else:
             node_chr.append(int(df[df['Source']==node].Chromosome.values[0])) # item() returns numbers as str
-      
+    
     unique_values = len(set(df.Chromosome.to_list()))
     unique_values = len(set(node_chr))
     color_bar_values = [val for val in np.linspace(0, 1, unique_values+1) for _ in range(2)]
@@ -68,16 +68,16 @@ def plotter(G,df,title):
     ### Compile hover text for each node
     node_text = []
     for n,node in enumerate(G.nodes()):
-        next_node='None' if n==len(G.nodes())-1 else list(G.nodes())[n+1]
-        prev_node='None' if n==0 else list(G.nodes())[n-1]
+        next_node='None' if n==len(G.nodes())-1 else ','.join(str(i) for i in df[df['Source']==node]['Sink'].to_list() if i!='loose')
+        prev_node='None' if n==0 else ','.join(str(i) for i in df[df['Sink']==node]['Source'].to_list())
         if node_chr[n]==23:
-            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: X | CN: {node_y[n]}' )
+            node_text.append(f'Prev: {prev_node}<br><b>-Node:{node}-</b><br>Next: {next_node}<br>Chromosome: X<br>CN: {node_y[n]}' )
         elif node_chr[n]==24:
-            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: Y | CN: {node_y[n]}')
+            node_text.append(f'Prev: {prev_node}<br><b>-Node:{node}-</b><br>Next: {next_node}<br>Chromosome: Y<br>CN: {node_y[n]}')
         elif node_chr[n]==25:
-            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: M | CN: {node_y[n]}')
+            node_text.append(f'Prev: {prev_node}<br><b>-Node:{node}-</b><br>Next: {next_node}<br>Chromosome: M<br>CN: {node_y[n]}')
         else:
-            node_text.append(f'Node:{node} | Prev: {prev_node} | Next: {next_node} | Chromosome: {node_chr[n]} | CN: {node_y[n]}')
+            node_text.append(f'Prev: {prev_node}<br><b>-Node:{node}-</b><br>Next: {next_node}<br>Chromosome: {node_chr[n]}<br>CN: {node_y[n]}')
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -110,19 +110,18 @@ def plotter(G,df,title):
 
     fig = go.Figure(data=[edge_trace, node_trace],
                 layout=go.Layout(
-                    width=1600, height=400,
-                    title=title,
+                    title='Network graph of the longest chain',
                     titlefont_size=16,
                     showlegend=False,
                     hovermode='closest',
                     margin=dict(b=20,l=15,r=5,t=40),
                     annotations=[ dict(
-                        text=f"Length of the chain: {len(node_y)}",
+                        text=f"Number of nodes: {len(node_y)}",
                         showarrow=False,
                         xref="paper", yref="paper",
                         x=0.1, y=1 ) ],
-                    xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"),
-                    yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"))
+                    xaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Start Point"),
+                    yaxis=dict(showgrid=True, zeroline=True, showticklabels=True,showline=True,title_text = "Copy Number"))
                     )
 
     return fig
