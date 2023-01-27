@@ -1,1 +1,1 @@
-longest_chain_v3.txt
+longest_chain_cn2.txt
