@@ -13,12 +13,13 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
 # Cache the dataframe so it's only loaded once
 @st.experimental_memo
-def load_data():
-    G = pickle.load(open('saved_variables/graph.txt','rb'))
-    lg = pickle.load(open('saved_variables/longest_chain.txt','rb'))
-    df = pickle.load(open('saved_variables/dataframe.txt','rb')) # big dataframe
+def load_data(dataset):
+    G = pickle.load(open(f'saved_variables/graph_{dataset}.txt','rb'))
+    lg = pickle.load(open(f'saved_variables/longest_chain_{dataset}.txt','rb'))
+    cyc = pickle.load(open(f'saved_variables/simple_cycles_{dataset}.txt','rb'))
+    df = pickle.load(open(f'saved_variables/dataframe_{dataset}.txt','rb')) # big dataframe
     df = df.sort_values(by=['Source'])
-    return G,lg,df
+    return G,lg,cyc,df
 
 def plotter(G,df,title):
     edge_x = []
@@ -110,7 +111,7 @@ def plotter(G,df,title):
 
     fig = go.Figure(data=[edge_trace, node_trace],
                 layout=go.Layout(
-                    title='Network graph of the longest chain',
+                    title=title,
                     titlefont_size=16,
                     showlegend=False,
                     hovermode='closest',
@@ -127,14 +128,20 @@ def plotter(G,df,title):
     return fig
 
 def main():
+    st.set_page_config(layout="wide")
+    col1,col2 = st.columns([3,2])
+    with col1:
+        dataset = st.selectbox("Dataset", ['SM12_12','235884-WG01'], index=0)
+        G,lg,cyc,df = load_data(dataset)
+        fig_all = plotter(G,df,'Network graph of all the paths')
+        st.plotly_chart(fig_all, use_container_width=True)
+        fig_longest = plotter(lg,df,'Network graph of the longest chain')    
+        st.plotly_chart(fig_longest, use_container_width=True)
+    with col2:
+        simple_cycles = plotter(cyc,df,'Network graph of the circular paths')
+        st.plotly_chart(simple_cycles, use_container_width=True)
+        st.write('PS: Individual nodes represent self loops')
 
-    G,lg,df = load_data()
-
-    fig_all = plotter(G,df,'Network graph of all the paths')
-    fig_longest = plotter(lg,df,'Network graph of the longest chain')
-
-    st.plotly_chart(fig_all, use_container_width=True)
-    st.plotly_chart(fig_longest, use_container_width=True)
 
     with st.sidebar:
         # Style and Printing
